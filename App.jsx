@@ -8,18 +8,33 @@ import {
   Dimensions,
   StatusBar,
   Switch,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { 
+  MaterialIcons,
+  MaterialCommunityIcons,
+  FontAwesome,
+  Ionicons
+} from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
 const WeatherApp = () => {
   const [menuVisible, setMenuVisible] = useState(false);
-  const [slideAnim] = useState(new Animated.Value(-width * 0.8));
+  const [locationDropdownVisible, setLocationDropdownVisible] = useState(false);
+  const [temperatureDropdownVisible, setTemperatureDropdownVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('South Korea');
+  const [temperatureUnit, setTemperatureUnit] = useState('Celsius');
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isColorblindMode, setIsColorblindMode] = useState(false);
+  const [slideAnim] = useState(new Animated.Value(width * 0.8));
   const [overlayAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.95));
   const [slideUpAnim] = useState(new Animated.Value(20));
+
+  const countries = ['Mexico', 'South Korea', 'United States', 'Japan', 'China', 'United Kingdom', 'Canada', 'Australia'];
 
   useEffect(() => {
     Animated.parallel([
@@ -46,7 +61,7 @@ const WeatherApp = () => {
       // Hide menu
       Animated.parallel([
         Animated.timing(slideAnim, {
-          toValue: -width * 0.8,
+          toValue: width * 0.8,
           duration: 300,
           useNativeDriver: true,
         }),
@@ -90,18 +105,14 @@ const WeatherApp = () => {
     <Text style={styles.emojiIcon}>🌙</Text>
   );
 
-  const GitHubIcon = () => (
-    <View style={styles.githubIcon}>
-      <View style={styles.githubShape} />
-    </View>
-  );
+
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
       <LinearGradient
-        colors={['#FF8C00', '#FF6B35', '#8B4A9C', '#4A4A8B']}
+        colors={['#FF9F1D', '#826E7D', '#35375C', '#000000']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -212,47 +223,99 @@ const WeatherApp = () => {
           </View>
 
           <View style={styles.menuContent}>
-            <View style={styles.menuSection}>
-              <Text style={styles.menuSectionIcon}>📍</Text>
+            <TouchableOpacity 
+              style={styles.menuSection}
+              onPress={() => setLocationDropdownVisible(!locationDropdownVisible)}
+            >
+              <MaterialIcons name="location-on" size={24} color="#fff" style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
                 <Text style={styles.menuSectionTitle}>Location</Text>
-                <Text style={styles.menuSectionValue}>South Korea</Text>
+                <Text style={styles.menuSectionValue}>{selectedLocation}</Text>
               </View>
-              <Text style={styles.menuArrow}>‹</Text>
-            </View>
+              <MaterialIcons 
+                name={locationDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
+                size={24} 
+                color="#888" 
+              />
+            </TouchableOpacity>
+            
+            {locationDropdownVisible && (
+              <View style={styles.dropdownMenu}>
+                {countries.map((country) => (
+                  <TouchableOpacity
+                    key={country}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setSelectedLocation(country);
+                      setLocationDropdownVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.dropdownText, selectedLocation === country && styles.selectedDropdownText]}>
+                      {country}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
-            <View style={styles.menuSection}>
-              <Text style={styles.menuSectionIcon}>🌡️</Text>
+            <TouchableOpacity 
+              style={styles.menuSection}
+              onPress={() => setTemperatureDropdownVisible(!temperatureDropdownVisible)}
+            >
+              <MaterialCommunityIcons name="thermometer" size={24} color="#fff" style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
                 <Text style={styles.menuSectionTitle}>Temperature</Text>
-                <Text style={styles.menuSectionValue}>Celsius Degrees C°</Text>
+                <Text style={styles.menuSectionValue}>{temperatureUnit}</Text>
               </View>
-              <Text style={styles.menuArrow}>‹</Text>
-            </View>
+              <MaterialIcons 
+                name={temperatureDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
+                size={24} 
+                color="#888" 
+              />
+            </TouchableOpacity>
+
+            {temperatureDropdownVisible && (
+              <View style={styles.dropdownMenu}>
+                {['Celsius', 'Fahrenheit'].map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setTemperatureUnit(unit);
+                      setTemperatureDropdownVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.dropdownText, temperatureUnit === unit && styles.selectedDropdownText]}>
+                      {unit}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             <View style={styles.menuSection}>
-              <Text style={styles.menuSectionIcon}>🌓</Text>
+              <Ionicons name={isDarkTheme ? "moon" : "sunny"} size={24} color="#fff" style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
                 <Text style={styles.menuSectionTitle}>Theme</Text>
-                <Text style={styles.menuSectionValue}>Light</Text>
+                <Text style={styles.menuSectionValue}>{isDarkTheme ? 'Dark' : 'Light'}</Text>
               </View>
               <Switch
-                value={true}
-                onValueChange={() => {}}
+                value={isDarkTheme}
+                onValueChange={() => setIsDarkTheme(!isDarkTheme)}
                 trackColor={{ false: '#555', true: '#4CAF50' }}
                 thumbColor="#fff"
               />
             </View>
 
             <View style={styles.menuSection}>
-              <Text style={styles.menuSectionIcon}>♿</Text>
+              <MaterialIcons name="accessibility" size={24} color="#fff" style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
                 <Text style={styles.menuSectionTitle}>Accessibility</Text>
                 <Text style={styles.menuSectionValue}>Colorblind Mode</Text>
               </View>
               <Switch
-                value={false}
-                onValueChange={() => {}}
+                value={isColorblindMode}
+                onValueChange={() => setIsColorblindMode(!isColorblindMode)}
                 trackColor={{ false: '#555', true: '#4CAF50' }}
                 thumbColor="#fff"
               />
@@ -261,7 +324,12 @@ const WeatherApp = () => {
 
           <View style={styles.menuFooter}>
             <Text style={styles.createdBy}>Created by Won Lee</Text>
-            <GitHubIcon />
+            <TouchableOpacity 
+              onPress={() => Linking.openURL('https://github.com/wonseobi')}
+              style={styles.githubIcon}
+            >
+              <FontAwesome name="github" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
         </Animated.View>
       )}
@@ -299,22 +367,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   menuButton: {
-    padding: 8,
+    padding: 2,
   },
   menuIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dot: {
-    width: 4,
-    height: 4,
-    backgroundColor: 'white',
+    width: 5,
+    height: 5,
+    backgroundColor: 'black',
     borderRadius: 2,
-    marginVertical: 1,
+    marginVertical: 1.5,
   },
   weatherIconContainer: {
     alignItems: 'center',
@@ -401,10 +469,10 @@ const styles = StyleSheet.create({
   sideMenu: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    width: width * 0.8,
+    right: 0,
+    width: width * 0.75,
     height: height,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0e0e0eff',
     paddingTop: 60,
     paddingHorizontal: 24,
   },
@@ -417,7 +485,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     color: 'white',
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '350',
   },
   closeButton: {
     color: 'white',
@@ -445,7 +513,7 @@ const styles = StyleSheet.create({
   menuSectionTitle: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '400',
     marginBottom: 2,
   },
   menuSectionValue: {
@@ -456,7 +524,28 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 18,
     fontWeight: 'bold',
-    transform: [{ rotate: '180deg' }],
+  },
+  dropdownMenu: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    marginLeft: 40,
+    marginTop: -10,
+    marginBottom: 10,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  dropdownItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  dropdownText: {
+    color: '#717171ff',
+    fontSize: 14,
+  },
+  selectedDropdownText: {
+    color: '#ffffffff',
+    fontWeight: '500',
   },
   menuFooter: {
     alignItems: 'center',
@@ -468,18 +557,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   githubIcon: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     backgroundColor: '#333',
-    borderRadius: 16,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  githubShape: {
-    width: 20,
-    height: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
   },
 });
 
