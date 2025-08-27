@@ -161,13 +161,13 @@ const WeatherApp = () => {
             <View style={styles.infoRow}>
               <View style={styles.infoItem}>
                 <SunIcon />
-                <Text style={styles.infoLabel}>Sunrise</Text>
-                <Text style={styles.infoValue}>5:53 am</Text>
+                <Text style={styles.mainInfoLabel}>Sunrise</Text>
+                <Text style={styles.mainInfoValue}>5:53 am</Text>
               </View>
               <View style={styles.infoItem}>
                 <MoonIcon />
-                <Text style={styles.infoLabel}>Sunset</Text>
-                <Text style={styles.infoValue}>6:45 pm</Text>
+                <Text style={styles.mainInfoLabel}>Sunset</Text>
+                <Text style={styles.mainInfoValue}>6:45 pm</Text>
               </View>
             </View>
             
@@ -386,7 +386,8 @@ const styles = StyleSheet.create({
   },
   weatherIconContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
+    paddingTop: 50,
   },
   weatherIconPlaceholder: {
     fontSize: 80,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
   },
   weatherStatus: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '500',
     textAlign: 'center',
     letterSpacing: 2,
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
   },
   dateTime: {
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -419,7 +420,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   viewWeekText: {
-    color: '#C78FFF',
+    color: '#ba74ffff',
+    fontWeight: 450,
     fontSize: 16,
     marginRight: 8,
   },
@@ -431,7 +433,7 @@ const styles = StyleSheet.create({
   infoGrid: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   infoRow: {
     flexDirection: 'row',
@@ -441,19 +443,34 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-start',
   },
+  mainInfoLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 16,
+    marginBottom: 4,
+    paddingLeft: 65,
+  },
   infoLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 4,
+    paddingLeft: 35,
   },
   infoValue: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '300',
+    paddingLeft: 35,
+  },
+  mainInfoValue: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '300',
+    paddingLeft: 65,
   },
   emojiIcon: {
-    fontSize: 20,
-    marginBottom: 8,
+    fontSize: 30,
+    position: 'absolute',
+    left: 20,
   },
   overlay: {
     position: 'absolute',
