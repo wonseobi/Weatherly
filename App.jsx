@@ -20,6 +20,32 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
+const lightTheme = {
+  menuBackground: '#ffffff',
+  menuText: '#000000',
+  menuSubText: '#666666',
+  menuBorder: '#e0e0e0',
+  menuIcon: '#333333',
+  dropdownBackground: '#f5f5f5',
+  dropdownText: '#333333',
+  selectedText: '#4CAF50',
+  switchTrackColor: { false: '#cccccc', true: '#4CAF50' },
+  switchThumbColor: '#ffffff',
+};
+
+const darkTheme = {
+  menuBackground: '#0e0e0eff',
+  menuText: '#ffffff',
+  menuSubText: '#888888',
+  menuBorder: '#333333',
+  menuIcon: '#ffffff',
+  dropdownBackground: '#1a1a1a',
+  dropdownText: '#717171ff',
+  selectedText: '#ffffffff',
+  switchTrackColor: { false: '#555555', true: '#4CAF50' },
+  switchThumbColor: '#ffffff',
+};
+
 const WeatherApp = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [locationDropdownVisible, setLocationDropdownVisible] = useState(false);
@@ -28,6 +54,8 @@ const WeatherApp = () => {
   const [temperatureUnit, setTemperatureUnit] = useState('Celsius');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isColorblindMode, setIsColorblindMode] = useState(false);
+  
+  const theme = isDarkTheme ? darkTheme : lightTheme;
   const [slideAnim] = useState(new Animated.Value(width * 0.8));
   const [overlayAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -212,35 +240,41 @@ const WeatherApp = () => {
         <Animated.View
           style={[
             styles.sideMenu,
-            { transform: [{ translateX: slideAnim }] }
+            { 
+              transform: [{ translateX: slideAnim }],
+              backgroundColor: theme.menuBackground
+            }
           ]}
         >
           <View style={styles.menuHeader}>
-            <Text style={styles.menuTitle}>Settings</Text>
+            <Text style={[styles.menuTitle, { color: theme.menuText }]}>Settings</Text>
             <TouchableOpacity onPress={toggleMenu}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Text style={[styles.closeButton, { color: theme.menuText }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.menuContent}>
             <TouchableOpacity 
-              style={styles.menuSection}
+              style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
               onPress={() => setLocationDropdownVisible(!locationDropdownVisible)}
             >
-              <MaterialIcons name="location-on" size={24} color="#fff" style={styles.menuSectionIcon} />
+              <MaterialIcons name="location-on" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
-                <Text style={styles.menuSectionTitle}>Location</Text>
-                <Text style={styles.menuSectionValue}>{selectedLocation}</Text>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Location</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{selectedLocation}</Text>
               </View>
               <MaterialIcons 
                 name={locationDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
                 size={24} 
-                color="#888" 
+                color={theme.menuSubText}
               />
             </TouchableOpacity>
             
             {locationDropdownVisible && (
-              <View style={styles.dropdownMenu}>
+              <View style={[styles.dropdownMenu, { 
+                backgroundColor: theme.dropdownBackground,
+                borderColor: theme.menuBorder
+              }]}>
                 {countries.map((country) => (
                   <TouchableOpacity
                     key={country}
@@ -250,7 +284,11 @@ const WeatherApp = () => {
                       setLocationDropdownVisible(false);
                     }}
                   >
-                    <Text style={[styles.dropdownText, selectedLocation === country && styles.selectedDropdownText]}>
+                    <Text style={[
+                      styles.dropdownText, 
+                      { color: theme.dropdownText },
+                      selectedLocation === country && { color: theme.selectedText }
+                    ]}>
                       {country}
                     </Text>
                   </TouchableOpacity>
@@ -259,23 +297,26 @@ const WeatherApp = () => {
             )}
 
             <TouchableOpacity 
-              style={styles.menuSection}
+              style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
               onPress={() => setTemperatureDropdownVisible(!temperatureDropdownVisible)}
             >
-              <MaterialCommunityIcons name="thermometer" size={24} color="#fff" style={styles.menuSectionIcon} />
+              <MaterialCommunityIcons name="thermometer" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
               <View style={styles.menuSectionContent}>
-                <Text style={styles.menuSectionTitle}>Temperature</Text>
-                <Text style={styles.menuSectionValue}>{temperatureUnit}</Text>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Temperature</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{temperatureUnit}</Text>
               </View>
               <MaterialIcons 
                 name={temperatureDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
                 size={24} 
-                color="#888" 
+                color={theme.menuSubText}
               />
             </TouchableOpacity>
 
             {temperatureDropdownVisible && (
-              <View style={styles.dropdownMenu}>
+              <View style={[styles.dropdownMenu, { 
+                backgroundColor: theme.dropdownBackground,
+                borderColor: theme.menuBorder
+              }]}>
                 {['Celsius', 'Fahrenheit'].map((unit) => (
                   <TouchableOpacity
                     key={unit}
@@ -285,7 +326,11 @@ const WeatherApp = () => {
                       setTemperatureDropdownVisible(false);
                     }}
                   >
-                    <Text style={[styles.dropdownText, temperatureUnit === unit && styles.selectedDropdownText]}>
+                    <Text style={[
+                      styles.dropdownText, 
+                      { color: theme.dropdownText },
+                      temperatureUnit === unit && { color: theme.selectedText }
+                    ]}>
                       {unit}
                     </Text>
                   </TouchableOpacity>
@@ -293,42 +338,52 @@ const WeatherApp = () => {
               </View>
             )}
 
-            <View style={styles.menuSection}>
-              <Ionicons name={isDarkTheme ? "moon" : "sunny"} size={24} color="#fff" style={styles.menuSectionIcon} />
+            <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
+              <Ionicons 
+                name={isDarkTheme ? "moon" : "sunny"} 
+                size={24} 
+                color={theme.menuIcon} 
+                style={styles.menuSectionIcon} 
+              />
               <View style={styles.menuSectionContent}>
-                <Text style={styles.menuSectionTitle}>Theme</Text>
-                <Text style={styles.menuSectionValue}>{isDarkTheme ? 'Dark' : 'Light'}</Text>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Theme</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{isDarkTheme ? 'Dark' : 'Light'}</Text>
               </View>
               <Switch
                 value={isDarkTheme}
                 onValueChange={() => setIsDarkTheme(!isDarkTheme)}
-                trackColor={{ false: '#555', true: '#4CAF50' }}
-                thumbColor="#fff"
+                trackColor={theme.switchTrackColor}
+                thumbColor={theme.switchThumbColor}
               />
             </View>
 
-            <View style={styles.menuSection}>
-              <MaterialIcons name="accessibility" size={24} color="#fff" style={styles.menuSectionIcon} />
+            <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
+              <MaterialIcons 
+                name="accessibility" 
+                size={24} 
+                color={theme.menuIcon} 
+                style={styles.menuSectionIcon} 
+              />
               <View style={styles.menuSectionContent}>
-                <Text style={styles.menuSectionTitle}>Accessibility</Text>
-                <Text style={styles.menuSectionValue}>Colorblind Mode</Text>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Accessibility</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>Colorblind Mode</Text>
               </View>
               <Switch
                 value={isColorblindMode}
                 onValueChange={() => setIsColorblindMode(!isColorblindMode)}
-                trackColor={{ false: '#555', true: '#4CAF50' }}
-                thumbColor="#fff"
+                trackColor={theme.switchTrackColor}
+                thumbColor={theme.switchThumbColor}
               />
             </View>
           </View>
 
           <View style={styles.menuFooter}>
-            <Text style={styles.createdBy}>Created by Won Lee</Text>
+            <Text style={[styles.createdBy, { color: theme.menuSubText }]}>Created by Won Lee</Text>
             <TouchableOpacity 
               onPress={() => Linking.openURL('https://github.com/wonseobi')}
-              style={styles.githubIcon}
+              style={[styles.githubIcon, { backgroundColor: theme.menuBorder }]}
             >
-              <FontAwesome name="github" size={24} color="#fff" />
+              <FontAwesome name="github" size={24} color={theme.menuIcon} />
             </TouchableOpacity>
           </View>
         </Animated.View>
