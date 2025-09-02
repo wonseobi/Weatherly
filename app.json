@@ -4,11 +4,11 @@
     "slug": "Weatherly",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./app_logo.png",
+    "icon": "./src/assets/splash.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./app_logo.png",
+      "image": "./src/assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },

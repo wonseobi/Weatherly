@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
   },
   temperature: {
     color: 'white',
-    fontSize: 64,
+    fontSize: 56,
     fontWeight: '300',
     textAlign: 'center',
     marginBottom: 8,
@@ -272,4 +272,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  weatherImage: {
+  width: 175,
+  height: 175,
+},
 });
