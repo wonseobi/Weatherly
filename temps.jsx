@@ -26,7 +26,7 @@ const { width } = Dimensions.get('window');
 
 // OpenWeatherMap API configuration
 const API_KEY = '5b549a8a3d848027af3b29231469a8fb';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const BASE_URL = 'https://api.openweathermap.org/data/2.5/onecall';
 
 // Location coordinates for different countries/cities
 const LOCATION_COORDINATES = {
@@ -110,35 +110,20 @@ const WeatherApp = () => {
   };
 
   // Fetch weather data from OpenWeatherMap API
-  const fetchWeatherData = async (lat, lon, cityName) => {
+  const fetchWeatherData = async (lat, lon) => {
     try {
       setLoading(true);
+      const response = await fetch(
+      `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&exclude=minutely,alerts`
+      );
 
-      const url = cityName
-        ? `${BASE_URL}?q=${cityName}&appid=${API_KEY}&units=metric`
-        : `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-
-      const response = await fetch(url);
-
+      
       if (!response.ok) {
         throw new Error(`Weather API error: ${response.status}`);
       }
-
+      
       const data = await response.json();
-
-      const mappedData = {
-        current: {
-          temp: data.main.temp,
-          humidity: data.main.humidity,
-          uvi: 0, // /weather API free plan doesn't provide UV index
-          sunrise: data.sys.sunrise,
-          sunset: data.sys.sunset,
-          weather: data.weather
-        },
-        hourly: [{ pop: 0 }] // precipitation fallback
-      };
-
-      setWeatherData(mappedData);
+      setWeatherData(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching weather data:', error);
@@ -167,6 +152,7 @@ const WeatherApp = () => {
       
       setCurrentCoordinates({ lat: latitude, lon: longitude });
 
+      // Get location name from coordinates
       const [placeDetails] = await Location.reverseGeocodeAsync({
         latitude,
         longitude
@@ -175,7 +161,10 @@ const WeatherApp = () => {
       if (placeDetails) {
         const locationName = placeDetails.city || placeDetails.region || placeDetails.country || 'Current Location';
         setCurrentLocationName(locationName);
-        await fetchWeatherData(latitude, longitude, locationName);
+        
+        // Fetch weather data for current location
+        await fetchWeatherData(latitude, longitude);
+        
         return locationName;
       }
       return 'Current Location';
@@ -199,7 +188,7 @@ const WeatherApp = () => {
     } else {
       const coordinates = LOCATION_COORDINATES[location];
       if (coordinates) {
-        await fetchWeatherData(coordinates.lat, coordinates.lon, coordinates.name);
+        await fetchWeatherData(coordinates.lat, coordinates.lon);
       }
     }
   };
@@ -209,6 +198,7 @@ const WeatherApp = () => {
     const day = days[date.getDay()];
     const dateNum = date.getDate();
     
+    // Handle suffix logic properly
     let suffix;
     if (dateNum >= 11 && dateNum <= 13) {
       suffix = 'TH';
@@ -237,6 +227,7 @@ const WeatherApp = () => {
     return `${day} ${dateNum}${suffix} ${formattedHours}:${formattedMinutes}${ampm}`;
   };
 
+  // Format time from Unix timestamp
   const formatTime = (timestamp) => {
     const date = new Date(timestamp * 1000);
     const hours = date.getHours();
@@ -256,30 +247,72 @@ const WeatherApp = () => {
   const countries = ['Current Location', 'Mexico', 'South Korea', 'United States', 'Japan', 'China', 'United Kingdom', 'Canada', 'Australia'];
 
   useEffect(() => {
+    // Initial animations
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      Animated.timing(slideUpAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideUpAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
     ]).start();
 
-    const timer = setInterval(() => { setCurrentDateTime(new Date()); }, 60000);
+    // Update time every minute
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 60000);
 
+    // Get initial location and weather data
     getCurrentLocation();
 
+    // Cleanup timer on component unmount
     return () => clearInterval(timer);
   }, []);
 
+  // Update weather data when temperature unit changes
+  useEffect(() => {
+    // Weather data doesn't need to be refetched when unit changes,
+    // just the display will update automatically
+  }, [temperatureUnit]);
+
   const toggleMenu = () => {
     if (menuVisible) {
+      // Hide menu
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: width * 0.8, duration: 300, useNativeDriver: true }),
-        Animated.timing(overlayAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideAnim, {
+          toValue: width * 0.8,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]).start(() => setMenuVisible(false));
     } else {
+      // Show menu
       setMenuVisible(true);
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(overlayAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   };
@@ -300,9 +333,15 @@ const WeatherApp = () => {
     </View>
   );
 
-  const SunIcon = () => (<Text style={styles.emojiIcon}>☀️</Text>);
-  const MoonIcon = () => (<Text style={styles.emojiIcon}>🌙</Text>);
+  const SunIcon = () => (
+    <Text style={styles.emojiIcon}>☀️</Text>
+  );
 
+  const MoonIcon = () => (
+    <Text style={styles.emojiIcon}>🌙</Text>
+  );
+
+  // Display location name
   const getDisplayLocationName = () => {
     if (selectedLocation === 'Current Location') {
       return currentLocationName || 'Getting location...';
@@ -313,22 +352,37 @@ const WeatherApp = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
+      
       <LinearGradient
         colors={['#FF9F1D', '#826E7D', '#35375C', '#000000']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideUpAnim }] }]}>
+        <Animated.View style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [
+              { scale: scaleAnim },
+              { translateY: slideUpAnim }
+            ]
+          }
+        ]}>
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.locationLabel}>{getDisplayLocationName()}</Text>
+              <Text style={styles.locationLabel}>
+                {getDisplayLocationName()}
+              </Text>
               <Text style={styles.greeting}>{getTimeBasedGreeting()}</Text>
             </View>
-            <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}><MenuIcon /></TouchableOpacity>
+            <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
+              <MenuIcon />
+            </TouchableOpacity>
           </View>
 
+          {/* Loading Indicator */}
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#FFFFFF" />
@@ -336,60 +390,84 @@ const WeatherApp = () => {
             </View>
           ) : (
             <>
+              {/* Weather Icon */}
               <View style={styles.weatherIconContainer}>
                 <Text style={styles.weatherIconPlaceholder}>
                   {weatherData ? getWeatherIcon(weatherData.current.weather[0].main) : '🌤️'}
                 </Text>
               </View>
 
+              {/* Temperature */}
               <Text style={styles.temperature}>
                 {weatherData ? `${convertTemperature(weatherData.current.temp)}°${temperatureUnit === 'Celsius' ? 'C' : 'F'}` : '24°C'}
               </Text>
               
+              {/* Weather Status */}
               <Text style={styles.weatherStatus}>
                 {weatherData ? formatWeatherStatus(weatherData.current.weather[0].description) : 'LOADING...'}
               </Text>
               
               <Text style={styles.dateTime}>{formatDateTime(currentDateTime)}</Text>
 
+              {/* View This Week */}
               <TouchableOpacity style={styles.viewWeekButton}>
                 <Text style={styles.viewWeekText}>View this week</Text>
                 <Text style={styles.arrow}>›</Text>
               </TouchableOpacity>
 
+              {/* Bottom Info Grid */}
               <View style={styles.infoGrid}>
                 <View style={styles.infoRow}>
                   <View style={styles.infoItem}>
                     <SunIcon />
                     <Text style={styles.mainInfoLabel}>Sunrise</Text>
-                    <Text style={styles.mainInfoValue}>{weatherData ? formatTime(weatherData.current.sunrise) : '5:53 am'}</Text>
+                    <Text style={styles.mainInfoValue}>
+                      {weatherData ? formatTime(weatherData.current.sunrise) : '5:53 am'}
+                    </Text>
                   </View>
                   <View style={styles.infoItem}>
                     <MoonIcon />
                     <Text style={styles.mainInfoLabel}>Sunset</Text>
-                    <Text style={styles.mainInfoValue}>{weatherData ? formatTime(weatherData.current.sunset) : '6:45 pm'}</Text>
+                    <Text style={styles.mainInfoValue}>
+                      {weatherData ? formatTime(weatherData.current.sunset) : '6:45 pm'}
+                    </Text>
                   </View>
                 </View>
                 
                 <View style={styles.infoRow}>
                   <View style={styles.infoItem}>
                     <Text style={styles.infoLabel}>Air quality</Text>
-                    <Text style={styles.infoValue}>52 Moderate</Text>
+                    <Text style={styles.infoValue}>
+                      {/* Air quality not available in 2.5 API - using static fallback */}
+                      52 Moderate
+                    </Text>
                   </View>
                   <View style={styles.infoItem}>
                     <Text style={styles.infoLabel}>UV Index</Text>
-                    <Text style={styles.infoValue}>{weatherData ? `${Math.round(weatherData.current.uvi)} Normal` : '4 Normal'}</Text>
+                    <Text style={styles.infoValue}>
+                      {weatherData ? 
+                        `${Math.round(weatherData.current.uvi)} ${getUVDescription(weatherData.current.uvi)}` : 
+                        '4 Normal'
+                      }
+                    </Text>
                   </View>
                 </View>
                 
                 <View style={styles.infoRow}>
                   <View style={styles.infoItem}>
                     <Text style={styles.infoLabel}>Precipitation</Text>
-                    <Text style={styles.infoValue}>{weatherData ? `${Math.round((weatherData.hourly?.[0]?.pop || 0) * 100)}%` : '87%'}</Text>
+                    <Text style={styles.infoValue}>
+                      {weatherData ? 
+                        `${Math.round((weatherData.hourly?.[0]?.pop || 0) * 100)}%` : 
+                        '87%'
+                      }
+                    </Text>
                   </View>
                   <View style={styles.infoItem}>
                     <Text style={styles.infoLabel}>Humidity</Text>
-                    <Text style={styles.infoValue}>{weatherData ? `${weatherData.current.humidity}%` : '78%'}</Text>
+                    <Text style={styles.infoValue}>
+                      {weatherData ? `${weatherData.current.humidity}%` : '78%'}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -399,168 +477,168 @@ const WeatherApp = () => {
       </LinearGradient>
 
       {/* Menu Overlay */}
-            {menuVisible && (
-              <Animated.View style={[styles.overlay, { opacity: overlayAnim }]}>
-                <TouchableOpacity
-                  style={styles.overlayTouchable}
-                  onPress={toggleMenu}
-                  activeOpacity={1}
-                />
-              </Animated.View>
+      {menuVisible && (
+        <Animated.View style={[styles.overlay, { opacity: overlayAnim }]}>
+          <TouchableOpacity
+            style={styles.overlayTouchable}
+            onPress={toggleMenu}
+            activeOpacity={1}
+          />
+        </Animated.View>
+      )}
+
+      {/* Side Menu */}
+      {menuVisible && (
+        <Animated.View
+          style={[
+            styles.sideMenu,
+            { 
+              transform: [{ translateX: slideAnim }],
+              backgroundColor: theme.menuBackground
+            }
+          ]}
+        >
+          <View style={styles.menuHeader}>
+            <Text style={[styles.menuTitle, { color: theme.menuText }]}>Settings</Text>
+            <TouchableOpacity onPress={toggleMenu}>
+              <Text style={[styles.closeButton, { color: theme.menuText }]}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.menuContent}>
+            <TouchableOpacity 
+              style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
+              onPress={() => setLocationDropdownVisible(!locationDropdownVisible)}
+            >
+              <MaterialIcons name="location-on" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
+              <View style={styles.menuSectionContent}>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Location</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{selectedLocation}</Text>
+              </View>
+              <MaterialIcons 
+                name={locationDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
+                size={24} 
+                color={theme.menuSubText}
+              />
+            </TouchableOpacity>
+            
+            {locationDropdownVisible && (
+              <View style={[styles.dropdownMenu, { 
+                backgroundColor: theme.dropdownBackground,
+                borderColor: theme.menuBorder
+              }]}>
+                {countries.map((country) => (
+                  <TouchableOpacity
+                    key={country}
+                    style={styles.dropdownItem}
+                    onPress={async () => {
+                      await handleLocationChange(country);
+                      setLocationDropdownVisible(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.dropdownText, 
+                      { color: theme.dropdownText },
+                      selectedLocation === country && { color: theme.selectedText }
+                    ]}>
+                      {country}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             )}
-      
-            {/* Side Menu */}
-            {menuVisible && (
-              <Animated.View
-                style={[
-                  styles.sideMenu,
-                  { 
-                    transform: [{ translateX: slideAnim }],
-                    backgroundColor: theme.menuBackground
-                  }
-                ]}
-              >
-                <View style={styles.menuHeader}>
-                  <Text style={[styles.menuTitle, { color: theme.menuText }]}>Settings</Text>
-                  <TouchableOpacity onPress={toggleMenu}>
-                    <Text style={[styles.closeButton, { color: theme.menuText }]}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-      
-                <View style={styles.menuContent}>
-                  <TouchableOpacity 
-                    style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
-                    onPress={() => setLocationDropdownVisible(!locationDropdownVisible)}
+
+            <TouchableOpacity 
+              style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
+              onPress={() => setTemperatureDropdownVisible(!temperatureDropdownVisible)}
+            >
+              <MaterialCommunityIcons name="thermometer" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
+              <View style={styles.menuSectionContent}>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Temperature</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{temperatureUnit}</Text>
+              </View>
+              <MaterialIcons 
+                name={temperatureDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
+                size={24} 
+                color={theme.menuSubText}
+              />
+            </TouchableOpacity>
+
+            {temperatureDropdownVisible && (
+              <View style={[styles.dropdownMenu, { 
+                backgroundColor: theme.dropdownBackground,
+                borderColor: theme.menuBorder
+              }]}>
+                {['Celsius', 'Fahrenheit'].map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setTemperatureUnit(unit);
+                      setTemperatureDropdownVisible(false);
+                    }}
                   >
-                    <MaterialIcons name="location-on" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
-                    <View style={styles.menuSectionContent}>
-                      <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Location</Text>
-                      <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{selectedLocation}</Text>
-                    </View>
-                    <MaterialIcons 
-                      name={locationDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
-                      size={24} 
-                      color={theme.menuSubText}
-                    />
+                    <Text style={[
+                      styles.dropdownText, 
+                      { color: theme.dropdownText },
+                      temperatureUnit === unit && { color: theme.selectedText }
+                    ]}>
+                      {unit}
+                    </Text>
                   </TouchableOpacity>
-                  
-                  {locationDropdownVisible && (
-                    <View style={[styles.dropdownMenu, { 
-                      backgroundColor: theme.dropdownBackground,
-                      borderColor: theme.menuBorder
-                    }]}>
-                      {countries.map((country) => (
-                        <TouchableOpacity
-                          key={country}
-                          style={styles.dropdownItem}
-                          onPress={async () => {
-                            await handleLocationChange(country);
-                            setLocationDropdownVisible(false);
-                          }}
-                        >
-                          <Text style={[
-                            styles.dropdownText, 
-                            { color: theme.dropdownText },
-                            selectedLocation === country && { color: theme.selectedText }
-                          ]}>
-                            {country}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-      
-                  <TouchableOpacity 
-                    style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}
-                    onPress={() => setTemperatureDropdownVisible(!temperatureDropdownVisible)}
-                  >
-                    <MaterialCommunityIcons name="thermometer" size={24} color={theme.menuIcon} style={styles.menuSectionIcon} />
-                    <View style={styles.menuSectionContent}>
-                      <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Temperature</Text>
-                      <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{temperatureUnit}</Text>
-                    </View>
-                    <MaterialIcons 
-                      name={temperatureDropdownVisible ? "keyboard-arrow-down" : "keyboard-arrow-right"} 
-                      size={24} 
-                      color={theme.menuSubText}
-                    />
-                  </TouchableOpacity>
-      
-                  {temperatureDropdownVisible && (
-                    <View style={[styles.dropdownMenu, { 
-                      backgroundColor: theme.dropdownBackground,
-                      borderColor: theme.menuBorder
-                    }]}>
-                      {['Celsius', 'Fahrenheit'].map((unit) => (
-                        <TouchableOpacity
-                          key={unit}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setTemperatureUnit(unit);
-                            setTemperatureDropdownVisible(false);
-                          }}
-                        >
-                          <Text style={[
-                            styles.dropdownText, 
-                            { color: theme.dropdownText },
-                            temperatureUnit === unit && { color: theme.selectedText }
-                          ]}>
-                            {unit}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-      
-                  <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
-                    <Ionicons 
-                      name={isDarkTheme ? "moon" : "sunny"} 
-                      size={24} 
-                      color={theme.menuIcon} 
-                      style={styles.menuSectionIcon} 
-                    />
-                    <View style={styles.menuSectionContent}>
-                      <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Theme</Text>
-                      <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{isDarkTheme ? 'Dark' : 'Light'}</Text>
-                    </View>
-                    <Switch
-                      value={isDarkTheme}
-                      onValueChange={() => setIsDarkTheme(!isDarkTheme)}
-                      trackColor={theme.switchTrackColor}
-                      thumbColor={theme.switchThumbColor}
-                    />
-                  </View>
-      
-                  <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
-                    <MaterialIcons 
-                      name="accessibility" 
-                      size={24} 
-                      color={theme.menuIcon} 
-                      style={styles.menuSectionIcon} 
-                    />
-                    <View style={styles.menuSectionContent}>
-                      <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Accessibility</Text>
-                      <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>Colorblind Mode</Text>
-                    </View>
-                    <Switch
-                      value={isColorblindMode}
-                      onValueChange={() => setIsColorblindMode(!isColorblindMode)}
-                      trackColor={theme.switchTrackColor}
-                      thumbColor={theme.switchThumbColor}
-                    />
-                  </View>
-                </View>
-      
-                <View style={styles.menuFooter}>
-                  <Text style={[styles.createdBy, { color: theme.menuSubText }]}>Created by Won Lee</Text>
-                  <TouchableOpacity 
-                    onPress={() => Linking.openURL('https://github.com/wonseobi')}
-                    style={[styles.githubIcon, { backgroundColor: theme.menuBorder }]}
-                  >
-                    <FontAwesome name="github" size={24} color={theme.menuIcon} />
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
+                ))}
+              </View>
+            )}
+
+            <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
+              <Ionicons 
+                name={isDarkTheme ? "moon" : "sunny"} 
+                size={24} 
+                color={theme.menuIcon} 
+                style={styles.menuSectionIcon} 
+              />
+              <View style={styles.menuSectionContent}>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Theme</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>{isDarkTheme ? 'Dark' : 'Light'}</Text>
+              </View>
+              <Switch
+                value={isDarkTheme}
+                onValueChange={() => setIsDarkTheme(!isDarkTheme)}
+                trackColor={theme.switchTrackColor}
+                thumbColor={theme.switchThumbColor}
+              />
+            </View>
+
+            <View style={[styles.menuSection, { borderBottomColor: theme.menuBorder }]}>
+              <MaterialIcons 
+                name="accessibility" 
+                size={24} 
+                color={theme.menuIcon} 
+                style={styles.menuSectionIcon} 
+              />
+              <View style={styles.menuSectionContent}>
+                <Text style={[styles.menuSectionTitle, { color: theme.menuText }]}>Accessibility</Text>
+                <Text style={[styles.menuSectionValue, { color: theme.menuSubText }]}>Colorblind Mode</Text>
+              </View>
+              <Switch
+                value={isColorblindMode}
+                onValueChange={() => setIsColorblindMode(!isColorblindMode)}
+                trackColor={theme.switchTrackColor}
+                thumbColor={theme.switchThumbColor}
+              />
+            </View>
+          </View>
+
+          <View style={styles.menuFooter}>
+            <Text style={[styles.createdBy, { color: theme.menuSubText }]}>Created by Won Lee</Text>
+            <TouchableOpacity 
+              onPress={() => Linking.openURL('https://github.com/wonseobi')}
+              style={[styles.githubIcon, { backgroundColor: theme.menuBorder }]}
+            >
+              <FontAwesome name="github" size={24} color={theme.menuIcon} />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       )}
     </View>
   );
