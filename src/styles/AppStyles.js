@@ -78,7 +78,7 @@ export const styles = StyleSheet.create({
   weatherIconContainer: {
     alignItems: 'center',
     marginBottom: 10,
-    paddingTop: 50,
+    paddingTop: 20,
   },
   weatherIconPlaceholder: {
     fontSize: 80,
@@ -273,7 +273,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weatherImage: {
-  width: 175,
-  height: 175,
+    position: 'relative',
+    width: 200,
+    height: 200,
 },
 });
